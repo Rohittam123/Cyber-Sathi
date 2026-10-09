@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Check suspicious messages for common scam and phishing warning signs." />
+    <meta name="theme-color" content="#071b25" />
+    <title>Scam Checker — CyberSaathi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script type="module" src="./js/main.js"></script><script type="module" src="./js/scam-checker.js"></script>
+  </head>
+  <body data-page="scam-checker">
+    <div data-site-header></div>
+    <main>
+      <section class="content-section section-shell page-section">
+        <div class="section-heading"><div><div class="eyebrow eyebrow-light">MESSAGE CHECKER</div><h1 class="page-title">A message feeling <span>off?</span></h1><p>Paste its text below. We’ll highlight common warning signs and suggest what to do next.</p></div><span class="section-index">01 / CHECK</span></div>
+        <div class="analyzer-layout">
+          <form id="analyzer-form" class="analyzer-card">
+            <label for="message-input">Suspicious message or website text</label>
+            <textarea id="message-input" rows="6" maxlength="5000" placeholder="Example: Your bank account will be blocked today. Verify now at http://example.com and share your OTP..." required></textarea>
+            <div class="form-foot"><span id="character-count">0 / 5000</span><button class="button button-primary" type="submit">Analyze message <span aria-hidden="true">→</span></button></div>
+            <p class="privacy-note"><span aria-hidden="true">⌑</span> Analysis runs in your browser. Nothing is saved unless you choose to save a report to your account. Never paste passwords, OTPs, or full payment details.</p>
+          </form>
+          <div id="analysis-result" class="result-card" aria-live="polite"><div class="result-empty-icon" aria-hidden="true">✳</div><h3>Your safety check will appear here</h3><p>We look for common scam patterns. This is an educational tool, not a guarantee that a message is safe.</p></div>
+        </div>
+        <div class="page-related"><a class="text-link" href="./incident-response.html">Already clicked, shared details, or paid? Build a recovery plan <span aria-hidden="true">↗</span></a></div>
+      </section>
+      <section class="help-banner section-shell"><div class="help-symbol" aria-hidden="true">!</div><div><h2>Think you’ve been scammed?</h2><p>Contact your bank or payment provider using their official number right away. In India, call <strong>1930</strong> for cyber financial fraud and report at <strong>cybercrime.gov.in</strong>. If elsewhere, contact your local cybercrime authority.</p></div><a class="button button-light" href="https://cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">Visit cybercrime.gov.in <span aria-hidden="true">↗</span></a></section>
+    </main>
+    <div data-site-footer></div>
+  </body>
+</html>

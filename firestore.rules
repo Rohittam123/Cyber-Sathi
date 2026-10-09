@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/analyses/{analysisId} {
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          'level', 'messageType', 'categories', 'messageText',
+          'summary', 'signals', 'advice', 'recommendations', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'level', 'messageType', 'categories', 'messageText',
+          'summary', 'signals', 'advice', 'recommendations', 'createdAt'
+        ])
+        && request.resource.data.level in ['low', 'medium', 'high']
+        && request.resource.data.messageType in [
+          'QR-code message',
+          'Phone-call message',
+          'SMS or messaging-app message',
+          'Email message',
+          'Website or link',
+          'Suspicious message'
+        ]
+        && request.resource.data.categories is list
+        && request.resource.data.categories.size() <= 10
+        && request.resource.data.signals is list
+        && request.resource.data.signals.size() <= 10
+        && request.resource.data.recommendations is list
+        && request.resource.data.recommendations.size() <= 10
+        && request.resource.data.messageText is string
+        && request.resource.data.messageText.size() <= 5000
+        && request.resource.data.summary is string
+        && request.resource.data.summary.size() <= 500
+        && request.resource.data.advice is string
+        && request.resource.data.advice.size() <= 2000
+        && request.resource.data.createdAt == request.time;
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if false;
+    }
+  }
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Build a private, step-by-step recovery plan after a suspicious message, scam payment, account takeover, or remote-access incident." />
+    <meta name="theme-color" content="#071b25" />
+    <title>Recovery Planner — CyberSaathi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/incident-response.js"></script>
+  </head>
+  <body data-page="incident-response">
+    <div data-site-header></div>
+    <main>
+      <section class="content-section section-shell incident-page">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow eyebrow-light">A CALM, CLEAR NEXT STEP</div>
+            <h1 class="page-title">Something happened? <span>Start here.</span></h1>
+            <p>Choose the closest situation to get a practical recovery checklist. You do not need to share personal details.</p>
+          </div>
+          <span class="section-index">ACTION PLAN</span>
+        </div>
+
+        <div class="incident-privacy"><span aria-hidden="true">◈</span><span><strong>Your choices stay in this browser.</strong> This planner does not ask for account details or save your answers.</span></div>
+        <div class="incident-layout">
+          <section class="incident-picker" aria-labelledby="incident-picker-title">
+            <div class="incident-picker-heading"><span class="incident-step-label">STEP 1</span><h2 id="incident-picker-title">What happened?</h2><p>Pick the nearest match. You can change it at any time.</p></div>
+            <div class="incident-options" role="group" aria-label="Choose what happened">
+              <button class="incident-option" type="button" data-situation="message" aria-pressed="false"><span class="incident-option-icon icon-blue" aria-hidden="true">✉</span><span><strong>I received a suspicious message or call</strong><small>I have not shared information or money</small></span><span class="incident-option-arrow" aria-hidden="true">→</span></button>
+              <button class="incident-option" type="button" data-situation="clicked" aria-pressed="false"><span class="incident-option-icon icon-yellow" aria-hidden="true">↗</span><span><strong>I clicked a link or opened a file</strong><small>I may have entered details or downloaded something</small></span><span class="incident-option-arrow" aria-hidden="true">→</span></button>
+              <button class="incident-option" type="button" data-situation="credentials" aria-pressed="false"><span class="incident-option-icon icon-coral" aria-hidden="true">⌑</span><span><strong>I shared a password, OTP, or PIN</strong><small>Someone may be able to access an account or payment</small></span><span class="incident-option-arrow" aria-hidden="true">→</span></button>
+              <button class="incident-option" type="button" data-situation="payment" aria-pressed="false"><span class="incident-option-icon icon-purple" aria-hidden="true">₹</span><span><strong>I sent money or approved a payment</strong><small>A transfer or card/UPI payment may be involved</small></span><span class="incident-option-arrow" aria-hidden="true">→</span></button>
+              <button class="incident-option" type="button" data-situation="remote" aria-pressed="false"><span class="incident-option-icon icon-green" aria-hidden="true">▣</span><span><strong>I installed an app or allowed screen access</strong><small>Someone may have viewed or controlled my device</small></span><span class="incident-option-arrow" aria-hidden="true">→</span></button>
+              <button class="incident-option" type="button" data-situation="account" aria-pressed="false"><span class="incident-option-icon icon-blue" aria-hidden="true">◎</span><span><strong>I lost access to an account</strong><small>My email, social, shopping, or other account changed</small></span><span class="incident-option-arrow" aria-hidden="true">→</span></button>
+            </div>
+          </section>
+          <section class="incident-plan" id="incident-plan" aria-live="polite" aria-labelledby="incident-plan-title">
+            <div class="incident-empty">
+              <div class="incident-empty-mark" aria-hidden="true">↗</div>
+              <span class="incident-step-label">STEP 2</span>
+              <h2 id="incident-plan-title">Your plan will appear here</h2>
+              <p>Choose what happened. We’ll put the most time-sensitive actions first and explain why each one matters.</p>
+              <div class="incident-empty-note"><span aria-hidden="true">✳</span> If you believe money is being taken right now, contact your bank using its official app or the number on your card immediately.</div>
+            </div>
+          </section>
+        </div>
+        <div class="incident-emergency"><div class="incident-emergency-icon" aria-hidden="true">!</div><div><strong>Money has been lost in India?</strong><p>Contact your bank or payment provider immediately using official details. Also call <a href="tel:1930">1930</a> and report at <a href="https://cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">cybercrime.gov.in</a>. Reporting quickly may help the authorities act, but recovery is not guaranteed.</p></div></div>
+      </section>
+    </main>
+    <div data-site-footer></div>
+  </body>
+</html>

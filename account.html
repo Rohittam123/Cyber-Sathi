@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="View private, detailed CyberSaathi scam-check reports saved to your account." />
+    <meta name="theme-color" content="#071b25" />
+    <title>My Account — CyberSaathi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/account.js"></script>
+  </head>
+  <body data-page="account">
+    <div data-site-header></div>
+    <main>
+      <section class="content-section section-shell page-section">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow eyebrow-light">YOUR PRIVATE ACTIVITY</div>
+            <h1 class="page-title">My scam-check <span>reports.</span></h1>
+            <p>Review each checked message, its detected warning signs, recommended next steps, and print or save that report as a PDF.</p>
+          </div>
+          <span class="section-index">YOUR ACCOUNT</span>
+        </div>
+        <div class="notice-card history-privacy"><strong>Privacy:</strong> Only reports you explicitly save are stored under your signed-in account. Saving a detailed report includes the original message text. Signed-out users see no saved reports, and one account never displays another account’s data.</div>
+        <section class="dashboard-overview" aria-label="Analysis overview">
+          <div id="history-metrics" class="history-metrics"></div>
+          <div class="history-insights">
+            <article class="insight-card risk-insight">
+              <div class="insight-heading"><div><div class="eyebrow eyebrow-light">RISK SNAPSHOT</div><h2>Checks by risk level</h2></div><span class="insight-icon" aria-hidden="true">◉</span></div>
+              <div class="risk-chart-layout">
+                <div id="risk-donut" class="risk-donut" role="img" aria-label="Risk distribution for your saved checks"><span id="risk-donut-total">0</span></div>
+                <div id="risk-legend" class="risk-legend"></div>
+              </div>
+            </article>
+            <article class="insight-card type-insight">
+              <div class="insight-heading"><div><div class="eyebrow eyebrow-light">MESSAGE TYPES</div><h2>What you checked</h2></div><span class="insight-icon" aria-hidden="true">⌕</span></div>
+              <div id="type-breakdown" class="type-breakdown"></div>
+            </article>
+          </div>
+        </section>
+        <section class="history-panel" aria-labelledby="history-heading">
+          <div class="history-heading">
+            <div><div class="eyebrow eyebrow-light">YOUR SAVED REPORTS</div><h2 id="history-heading">Message report history</h2></div>
+            <a class="button button-primary" href="./scam-checker.html">Check a message <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="history-toolbar">
+            <label class="history-search"><span aria-hidden="true">⌕</span><input id="history-search" type="search" placeholder="Search reports, messages, or warning signs" autocomplete="off" /></label>
+            <label class="history-sort">Sort
+              <select id="history-sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="risk">Highest risk first</option></select>
+            </label>
+          </div>
+          <div class="history-filters" role="group" aria-label="Filter analysis history">
+            <button type="button" class="history-filter" data-filter="all" aria-pressed="true">All checks</button>
+            <button type="button" class="history-filter" data-filter="high" aria-pressed="false">High risk</button>
+            <button type="button" class="history-filter" data-filter="medium" aria-pressed="false">Caution advised</button>
+            <button type="button" class="history-filter" data-filter="low" aria-pressed="false">Lower risk</button>
+          </div>
+          <p id="account-history-status" class="history-status" role="status" aria-live="polite">Loading your account history…</p>
+          <div id="analysis-history-list" class="analysis-history-list"></div>
+        </section>
+      </section>
+    </main>
+    <div data-site-footer></div>
+  </body>
+</html>
