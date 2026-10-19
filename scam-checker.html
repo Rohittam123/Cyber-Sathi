@@ -21,7 +21,8 @@
             <label for="message-input">Suspicious message or website text</label>
             <textarea id="message-input" rows="6" maxlength="5000" placeholder="Example: Your bank account will be blocked today. Verify now at http://example.com and share your OTP..." required></textarea>
             <div class="form-foot"><span id="character-count">0 / 5000</span><button class="button button-primary" type="submit">Analyze message <span aria-hidden="true">→</span></button></div>
-            <p class="privacy-note"><span aria-hidden="true">⌑</span> Analysis runs in your browser. Nothing is saved unless you choose to save a report to your account. Never paste passwords, OTPs, or full payment details.</p>
+            <label class="report-consent checker-save-consent"><input id="save-original-message" type="checkbox"><span>Also include the original message in my private account report. Leave unchecked to keep it off your account.</span></label>
+            <p class="privacy-note"><span aria-hidden="true">⌑</span> Analysis runs in your browser. When signed in, the report is saved to your account after analysis. The original message is only included if you opt in above. Never paste passwords, OTPs, or full payment details.</p>
           </form>
           <div id="analysis-result" class="result-card" aria-live="polite"><div class="result-empty-icon" aria-hidden="true">✳</div><h3>Your safety check will appear here</h3><p>We look for common scam patterns. This is an educational tool, not a guarantee that a message is safe.</p></div>
         </div>

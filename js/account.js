@@ -10,9 +10,13 @@ const riskLegend = document.querySelector("#risk-legend");
 const typeBreakdown = document.querySelector("#type-breakdown");
 const searchInput = document.querySelector("#history-search");
 const sortSelect = document.querySelector("#history-sort");
+const refreshButton = document.querySelector("#refresh-account-history");
 let allRecords = [];
 let activeFilter = "all";
 let requestNumber = 0;
+let signedInUser = null;
+
+const HISTORY_LOAD_TIMEOUT_MS = 15000;
 
 function setStatus(message, isError = false) {
   status.textContent = message;
@@ -65,7 +69,7 @@ function animateMetric(element, target) {
 
 function renderMetrics(records) {
   const highRisk = records.filter((record) => record.level === "high").length;
-  const fullReportCount = records.filter((record) => typeof record.messageText === "string").length;
+  const fullReportCount = records.filter((record) => typeof record.messageText === "string" && record.messageText.length > 0).length;
   const mostRecent = [...records].sort((a, b) => dateValue(b.createdAt) - dateValue(a.createdAt))[0];
   const recentLabel = mostRecent ? formatTimestamp(mostRecent.createdAt) : "No checks yet";
   const cards = [
@@ -175,7 +179,7 @@ function renderHistory(records, total = records.length) {
   if (records.length === 0) {
     historyList.innerHTML = total
       ? '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">⌕</span><h3>No matching checks</h3><p>Try another search or choose a different filter.</p></div>'
-      : '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">✳</span><h3>No saved reports yet</h3><p>Analyze a message, then explicitly save its detailed report to this account.</p><a class="text-link" href="./scam-checker.html">Open Scam Checker <span aria-hidden="true">→</span></a></div>';
+      : '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">✳</span><h3>No saved reports yet</h3><p>Analyze a message while signed in to save its report to this account. The original message is only saved when you opt in.</p><a class="text-link" href="./scam-checker.html">Open Scam Checker <span aria-hidden="true">→</span></a></div>';
     return;
   }
 
@@ -191,19 +195,21 @@ function renderHistory(records, total = records.length) {
     const recommendations = Array.isArray(record.recommendations)
       ? record.recommendations
       : (record.advice ? [record.advice] : []);
+    const hasDetailedReport = Array.isArray(record.signals) || Array.isArray(record.recommendations);
     return `
       <article class="history-entry">
         <div class="history-entry-main">
           <div class="history-entry-title"><div><h3>${escapeHtml(messageType)}</h3><span class="history-storage">Private account report</span></div><span class="result-status risk-${riskClass}"><span class="status-dot"></span>${escapeHtml(risk)}</span></div>
           <p><strong>Warning categories:</strong> ${categories}</p>
           <time>${escapeHtml(formatTimestamp(record.createdAt))}</time>
-          ${record.messageText ? `
+          ${hasDetailedReport ? `
             <details class="saved-report-details">
-              <summary>View detailed report and original message</summary>
+              <summary>${record.messageText ? "View detailed report and original message" : "View detailed report"}</summary>
               <div class="saved-report-content">
                 <p><strong>Assessment:</strong> ${escapeHtml(record.summary || "No assessment available.")}</p>
-                <h4>Original message checked</h4>
-                <pre>${escapeHtml(record.messageText)}</pre>
+                ${record.messageText
+                  ? `<h4>Original message checked</h4><pre>${escapeHtml(record.messageText)}</pre>`
+                  : '<p class="saved-report-disclaimer">The original message was not saved to your account.</p>'}
                 <h4>Detected warning signs</h4>
                 ${signals.length ? `<ul>${signals.map((signal) => `<li>${escapeHtml(signal)}</li>`).join("")}</ul>` : "<p>No common warning categories detected. This does not prove the message is safe.</p>"}
                 <h4>Recommended next steps</h4>
@@ -244,6 +250,8 @@ sortSelect.addEventListener("change", applyHistoryControls);
 
 async function showHistory(user) {
   const currentRequest = ++requestNumber;
+  signedInUser = user;
+  refreshButton.disabled = !user;
   allRecords = [];
   overview.hidden = true;
   renderMetrics(allRecords);
@@ -255,6 +263,8 @@ async function showHistory(user) {
     historyList.innerHTML = '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">◈</span><h3>Your account reports are private</h3><p>Sign in using the form in the footer to see reports saved to your account. No local or sample checks are shown here.</p><a class="text-link" href="#auth-email">Go to sign in <span aria-hidden="true">→</span></a></div>';
     return;
   }
+  refreshButton.disabled = true;
+  refreshButton.textContent = "Loading reports…";
   setStatus("Loading your private reports…");
 
   try {
@@ -263,7 +273,17 @@ async function showHistory(user) {
     if (!firebaseReady) {
       throw new Error("Firebase is not configured. Account reports cannot be loaded.");
     }
-    const accountRecords = await getAnalysisHistory(user.uid);
+    let timeoutId = 0;
+    const accountRecords = await Promise.race([
+      getAnalysisHistory(user.uid),
+      new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          const error = new Error("Firestore did not respond within 15 seconds.");
+          error.code = "history-load-timeout";
+          reject(error);
+        }, HISTORY_LOAD_TIMEOUT_MS);
+      }),
+    ]).finally(() => window.clearTimeout(timeoutId));
     if (currentRequest !== requestNumber) return;
     allRecords = accountRecords;
     overview.hidden = false;
@@ -278,9 +298,26 @@ async function showHistory(user) {
     renderMetrics(allRecords);
     renderInsights(allRecords);
     applyHistoryControls();
-    setStatus(`Could not load your account reports: ${error.message}`, true);
+    if (error.code === "history-load-timeout") {
+      setStatus("Your reports are taking longer than expected to load. Check your connection and Firebase/Firestore availability, then refresh.", true);
+    } else if (error.code === "permission-denied") {
+      setStatus("Firestore denied access to these reports. Confirm you are signed in to the same Firebase project and publish the current Firestore rules, then refresh.", true);
+    } else {
+      const reason = error.code || error.message || "Unknown Firebase error";
+      setStatus(`Could not load your account reports (${reason}). Check your connection and Firestore access, then refresh.`, true);
+    }
+    historyList.innerHTML = '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">!</span><h3>Reports could not be loaded</h3><p>Check the status above, then use “Refresh reports” to try again. Your saved reports have not been deleted.</p></div>';
+  } finally {
+    if (currentRequest === requestNumber) {
+      refreshButton.disabled = !signedInUser;
+      refreshButton.innerHTML = 'Refresh reports <span aria-hidden="true">↻</span>';
+    }
   }
 }
+
+refreshButton.addEventListener("click", () => {
+  if (signedInUser) void showHistory(signedInUser);
+});
 
 window.addEventListener("cybersaathi-auth-state", (event) => {
   showHistory(event.detail.user);

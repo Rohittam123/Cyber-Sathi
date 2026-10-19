@@ -25,7 +25,7 @@
           </div>
           <span class="section-index">YOUR ACCOUNT</span>
         </div>
-        <div class="notice-card history-privacy"><strong>Privacy:</strong> Only reports you explicitly save are stored under your signed-in account. Saving a detailed report includes the original message text. Signed-out users see no saved reports, and one account never displays another account’s data.</div>
+        <div class="notice-card history-privacy"><strong>Privacy:</strong> Message reports are saved to your signed-in account when you analyze them. The original message text is excluded unless you opt in on the Scam Checker. Signed-out checks are not saved, and one account never displays another account’s data.</div>
         <section class="dashboard-overview" aria-label="Analysis overview">
           <div id="history-metrics" class="history-metrics"></div>
           <div class="history-insights">
@@ -45,7 +45,10 @@
         <section class="history-panel" aria-labelledby="history-heading">
           <div class="history-heading">
             <div><div class="eyebrow eyebrow-light">YOUR SAVED REPORTS</div><h2 id="history-heading">Message report history</h2></div>
-            <a class="button button-primary" href="./scam-checker.html">Check a message <span aria-hidden="true">→</span></a>
+            <div class="history-heading-actions">
+              <button id="refresh-account-history" class="button button-secondary" type="button">Refresh reports <span aria-hidden="true">↻</span></button>
+              <a class="button button-primary" href="./scam-checker.html">Check a message <span aria-hidden="true">→</span></a>
+            </div>
           </div>
           <div class="history-toolbar">
             <label class="history-search"><span aria-hidden="true">⌕</span><input id="history-search" type="search" placeholder="Search reports, messages, or warning signs" autocomplete="off" /></label>

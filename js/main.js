@@ -50,7 +50,7 @@ async function initCyberChat() {
     const { initCyberChatWidget } = await import("./cyber-chat.js");
     initCyberChatWidget();
   } catch (error) {
-    console.error("CyberSaathi AI chat could not be initialized.", error);
+    console.error("CyberSaathi help chat could not be initialized.", error);
   }
 }
 

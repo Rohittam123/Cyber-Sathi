@@ -4,8 +4,10 @@ import { printAnalysisReport } from "./report-pdf.js";
 const analyzerForm = document.querySelector("#analyzer-form");
 const messageInput = document.querySelector("#message-input");
 const characterCount = document.querySelector("#character-count");
+const saveOriginalMessageInput = document.querySelector("#save-original-message");
 const result = document.querySelector("#analysis-result");
 let latestAnalysis = null;
+let latestSaveState = null;
 
 messageInput.addEventListener("input", () => {
   characterCount.textContent = `${messageInput.value.length} / 5000`;
@@ -20,18 +22,24 @@ analyzerForm.addEventListener("submit", (event) => {
     return;
   }
   messageInput.setCustomValidity("");
+  const includeMessageText = saveOriginalMessageInput.checked;
+  saveOriginalMessageInput.checked = false;
   latestAnalysis = {
     ...analyzeMessage(message),
     messageText: message,
+    includeMessageText,
     checkedAt: new Date().toISOString(),
   };
+  latestSaveState = { analysis: latestAnalysis, promise: null, saved: false };
   showAnalysis(latestAnalysis);
+  saveAnalysisWhenSignedIn(latestSaveState);
 });
 
 window.addEventListener("cybersaathi-auth-state", (event) => {
-  const button = result.querySelector("button.save-analysis");
-  if (button && latestAnalysis) {
-    button.textContent = event.detail.user ? "Save detailed report to my account" : "Sign in to save this report";
+  if (latestSaveState && event.detail.user) {
+    void saveReport(latestSaveState, event.detail.user);
+  } else if (latestSaveState) {
+    updateSavePrompt(latestSaveState);
   }
 });
 
@@ -60,59 +68,112 @@ function showAnalysis(analysis) {
     <h3>What we noticed</h3>
     <ul class="signal-list">${reportSignals}</ul>
     <div class="result-advice"><strong>Recommended next steps:</strong><ul class="report-recommendations">${analysis.recommendations.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>
-    <p class="report-caveat">This browser-based pattern check is educational, not a guarantee that a message is safe. The original message is not stored unless you choose the account-save option below.</p>
+    <p class="report-caveat">This browser-based pattern check is educational, not a guarantee that a message is safe. When signed in, the report is saved to your account. The original message is only included if you opted in before analyzing it.</p>
     <div class="save-actions report-actions">
-      <button class="save-analysis" type="button">${signedIn ? "Save detailed report to my account" : "Sign in to save this report"}</button>
+      <button class="save-analysis" type="button">${signedIn ? "Saving report…" : "Sign in to save this report"}</button>
       <button class="report-pdf" type="button">Print / Save report as PDF</button>
     </div>
-    <label class="report-consent"><input class="report-consent-checkbox" type="checkbox"><span>I understand saving includes the original message text in my private account report.</span></label>
     <p class="report-action-status" role="status" aria-live="polite"></p>`;
   result.dataset.level = analysis.level;
   result.querySelector(".save-analysis").addEventListener("click", saveCurrentAnalysis);
   result.querySelector(".report-pdf").addEventListener("click", printCurrentReport);
+  if (!signedIn) {
+    result.querySelector(".save-analysis").textContent = "Sign in to save this report";
+  }
 }
 
-async function saveCurrentAnalysis(event) {
-  if (!latestAnalysis) return;
-  const button = event.currentTarget;
-  const consent = result.querySelector(".report-consent-checkbox");
+function updateSavePrompt(saveState) {
+  if (saveState !== latestSaveState) return;
+  const button = result.querySelector("button.save-analysis");
   const actionStatus = result.querySelector(".report-action-status");
-  if (!consent.checked) {
-    actionStatus.textContent = "Tick the consent box to confirm that you want the original message included in your account report.";
-    consent.focus();
-    return;
-  }
-  button.disabled = true;
-  button.textContent = "Saving…";
+  if (!button || !actionStatus || saveState.saved || saveState.promise) return;
+  button.disabled = false;
+  button.textContent = saveState.error ? "Retry saving report" : "Sign in to save this report";
+  actionStatus.textContent = saveState.error || "Sign in to save this report to your account. This check is not saved while you are signed out.";
+}
 
+async function saveAnalysisWhenSignedIn(saveState) {
   try {
     const authState = window.cyberSaathiAuthState;
     const user = authState ? await authState.waitForUser() : null;
+    if (saveState !== latestSaveState) return;
     if (!user) {
-      button.disabled = false;
-      button.textContent = "Sign in to save this report";
-      showSignInPrompt("Sign in or create an account in the footer before saving this detailed report.");
+      updateSavePrompt(saveState);
       return;
     }
+    await saveReport(saveState, user);
+  } catch (error) {
+    showSaveError(saveState, error);
+  }
+}
 
+async function saveReport(saveState, user) {
+  if (saveState.saved) return;
+  if (saveState.promise) {
+    try {
+      await saveState.promise;
+    } catch (error) {
+      showSaveError(saveState, error);
+    }
+    return;
+  }
+  const button = saveState === latestSaveState ? result.querySelector("button.save-analysis") : null;
+  const actionStatus = saveState === latestSaveState ? result.querySelector(".report-action-status") : null;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Saving report…";
+  }
+  if (actionStatus) actionStatus.textContent = "Saving your report to your private account…";
+
+  saveState.promise = (async () => {
     const { firebaseReady, saveAnalysis } = await import("./firebase.js");
     if (!firebaseReady) {
       throw new Error("Firebase is not configured. Check js/firebase-config.js before saving to an account.");
     }
-    await saveAnalysis(user.uid, latestAnalysis);
-    button.textContent = "Report saved to your account";
-    button.disabled = true;
-    actionStatus.innerHTML = 'Your private report includes the original message. <a href="./account.html">Open My Account →</a>';
+    await saveAnalysis(user.uid, saveState.analysis, {
+      includeMessageText: saveState.analysis.includeMessageText,
+    });
+    saveState.saved = true;
+    if (saveState === latestSaveState && button?.isConnected && actionStatus?.isConnected) {
+      button.textContent = "Report saved to your account";
+      actionStatus.innerHTML = `Your report is saved${saveState.analysis.includeMessageText ? " with the original message" : " without the original message"}. <a href="./account.html">Open My Account →</a>`;
+    }
+  })();
+
+  try {
+    await saveState.promise;
   } catch (error) {
-    button.disabled = false;
-    button.textContent = "Save detailed report to my account";
-    const message = error.code === "permission-denied"
-      ? "Firestore denied the save. Publish the updated firestore.rules in Firebase Console, then try again."
-      : error.code === "auth/operation-not-allowed"
-        ? "Email/Password sign-in is disabled in Firebase Console. Enable it under Authentication → Sign-in method."
-        : `Could not save the report: ${error.message}`;
-    showSignInPrompt(message, true);
+    showSaveError(saveState, error);
+  } finally {
+    saveState.promise = null;
   }
+}
+
+function showSaveError(saveState, error) {
+  if (saveState !== latestSaveState) return;
+  const button = result.querySelector("button.save-analysis");
+  const actionStatus = result.querySelector(".report-action-status");
+  if (!button || !actionStatus) return;
+  button.disabled = false;
+  button.textContent = "Retry saving report";
+  const message = error.code === "permission-denied"
+    ? "Firestore denied the save. Publish the updated firestore.rules in Firebase Console, then try again."
+    : error.code === "auth/operation-not-allowed"
+      ? "Email/Password sign-in is disabled in Firebase Console. Enable it under Authentication → Sign-in method."
+      : `Could not save the report: ${error.message}`;
+  saveState.error = message;
+  actionStatus.textContent = message;
+}
+
+async function saveCurrentAnalysis() {
+  if (!latestSaveState) return;
+  const authState = window.cyberSaathiAuthState;
+  const user = authState ? await authState.waitForUser() : null;
+  if (!user) {
+    showSignInPrompt("Sign in or create an account in the footer. Your current check will be saved automatically after you sign in.");
+    return;
+  }
+  await saveReport(latestSaveState, user);
 }
 
 function printCurrentReport() {

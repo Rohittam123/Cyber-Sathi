@@ -27,9 +27,9 @@ A multi-page HTML, CSS, and JavaScript awareness app. Each main feature has its 
 - `js/report-pdf.js` — renders a specific report in a print-ready page so the user can save it as a PDF.
 - `js/auth.js` — Firebase email/password authentication UI.
 - `js/firebase.js` and `js/firebase-config.js` — Firebase initialization and Firestore save helper/configuration.
-- `js/cyber-chat.js` — site-wide AI cyber-safety chat interface; conversation history stays in memory for the current page session.
-- `functions/index.js` — Firebase callable function that securely calls DeepSeek through OpenRouter without exposing the API key to the browser.
-- `firestore.rules` — per-user rules for saved detailed reports, including the original message only after explicit user consent.
+- `js/cyber-chat.js` — site-wide help chat with detailed, predefined basic/intermediate safety guides and a fixed CyberSaathi platform overview for every typed question. Chat answers are generated locally and work without Firebase or an AI service.
+- `functions/index.js` — Firebase callable OpenRouter integration retained in the project; the CyberSaathi help chat does not call it.
+- `firestore.rules` — per-user rules for saved reports, with the original message optional and stored only after explicit user consent.
 
 ## Run locally
 
@@ -43,22 +43,14 @@ Serve this folder with a local static web server; shared header/footer partials,
 4. Copy the web app configuration into `js/firebase-config.js`.
 5. Publish `firestore.rules` to your Firestore database with `firebase deploy --only firestore:rules`. The current rules permit only the signed-in owner to read or write their own detailed report documents.
 
-Local analysis, quiz, checklist, and awareness-score features remain usable without Firebase. Message analysis runs in the browser. The original message is not persisted unless the user explicitly checks the consent box and saves a detailed report while signed in. That report stores the checked message, type, risk level, summary, detected warning signs, recommended actions, and server timestamp in that user's Firestore subcollection. Account history loads only the authenticated user's Firestore documents; signed-out users see no account or browser-local analysis records. Firestore rules restrict each account to its own reports. Older summary-only records remain visible but cannot produce a message-specific PDF because their source text was never saved. Previously saved device-only records remain in browser storage but are intentionally excluded from My Account.
+Local analysis, quiz, checklist, and awareness-score features remain usable without Firebase. Message analysis runs in the browser. When signed in, a scam-check report is automatically saved to that user's Firestore subcollection with the message type, risk level, summary, warning signs, recommended actions, and server timestamp. The original message is excluded unless the user opts in on the checker before analyzing it. Signed-out checks are not saved; if the user signs in while a result is open, that report is saved then. Account history loads only the authenticated user's Firestore documents; signed-out users see no account or browser-local analysis records. Firestore rules restrict each account to its own reports. Reports saved without their source text can display the full assessment, but cannot produce a message-specific PDF. Older summary-only records remain visible but cannot produce a message-specific PDF because their source text was never saved. Previously saved device-only records remain in browser storage but are intentionally excluded from My Account.
 
 On the checker and account report, **Print / Save as PDF** opens a print-ready version of that specific report. Choose **Save as PDF** in the browser's print dialog to create a PDF file. No PDF library or report upload is used.
 
-## Enable the AI cyber-safety chat
+## CyberSaathi help chat
 
-The chat generates responses from each question and recent context using `deepseek/deepseek-chat` through OpenRouter, rather than selecting answers from a predefined FAQ; responses may sometimes repeat. The conversation is sent to the callable function only while the page is open; it is not written to Firestore or local storage. The assistant is an educational aid, can make mistakes, and must not be given passwords, OTPs, recovery codes, or payment details.
+The site-wide chat provides detailed, predefined Basic and Intermediate cyber-safety guides. Clicking a guide shows its curated answer immediately. Typing any question displays the same fixed, detailed overview of CyberSaathi, its tools, privacy behavior, and urgent reporting options. Typed text is displayed in the current page only; it is not sent to Firebase, OpenRouter, or another AI service, and is not saved. These predefined answers are educational guidance, not a personalized diagnosis or a security verdict. Never enter passwords, OTPs, recovery codes, or payment details.
 
-The OpenRouter key must remain a Firebase Functions secret; never paste it into HTML or JavaScript.
-
-1. Ensure `js/firebase-config.js` points to the Firebase project you intend to use. Install and sign in to the Firebase CLI if needed.
-2. From this project folder, select that Firebase project with `firebase use <project-id>`.
-3. Set the key as a secret (Firebase prompts for it; do not add it to source files): `firebase functions:secrets:set OPENROUTER_API_KEY`
-4. Deploy the callable function: `firebase deploy --only functions`
-5. Use the site from its normal HTTP(S) origin (Live Server works for local testing). The chat button is added to every page by `js/main.js`.
-
-Cloud Functions deployment may require the Firebase project to be on the Blaze billing plan. OpenRouter usage can incur separate costs. The function bounds message size, context length, output size, and applies a basic per-instance request limit; monitor usage in Firebase and OpenRouter, and configure stronger abuse protection/App Check before wide public deployment.
+The chat does not require Firebase or OpenRouter configuration. The existing `functions/index.js` callable integration is retained but is not used by the chat widget.
 
 The detector is a learning aid, not a security verdict. A message flagged as low risk may still be fraudulent, and the rules may miss new scam tactics.

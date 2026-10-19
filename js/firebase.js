@@ -26,22 +26,24 @@ export const db = app ? getFirestore(app) : null;
 export const firebaseReady = Boolean(app);
 export { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut };
 
-export async function saveAnalysis(userId, analysis) {
+export async function saveAnalysis(userId, analysis, { includeMessageText = false } = {}) {
   if (!db || !userId) {
     throw new Error("Sign in with a configured Firebase project to save analysis history.");
   }
 
-  await addDoc(collection(db, "users", userId, "analyses"), {
+  const report = {
     level: analysis.level,
     messageType: analysis.messageType,
     categories: analysis.categories,
-    messageText: analysis.messageText,
+    messageText: includeMessageText ? analysis.messageText : "",
     summary: analysis.summary,
     signals: analysis.signals,
     advice: analysis.advice,
     recommendations: analysis.recommendations,
     createdAt: serverTimestamp(),
-  });
+  };
+
+  await addDoc(collection(db, "users", userId, "analyses"), report);
 }
 
 export async function getAnalysisHistory(userId) {
