@@ -260,7 +260,7 @@ async function showHistory(user) {
 
   if (!user) {
     setStatus("Sign in to see reports saved to your account. Signed-out accounts do not display browser or other-user check history.");
-    historyList.innerHTML = '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">◈</span><h3>Your account reports are private</h3><p>Sign in using the form in the footer to see reports saved to your account. No local or sample checks are shown here.</p><a class="text-link" href="#auth-email">Go to sign in <span aria-hidden="true">→</span></a></div>';
+    historyList.innerHTML = '<div class="history-empty"><span class="result-empty-icon" aria-hidden="true">◈</span><h3>Your account reports are private</h3><p>Sign in above to see reports saved to your account. No local or sample checks are shown here.</p><a class="text-link" href="#account-auth-email">Go to sign in <span aria-hidden="true">→</span></a></div>';
     return;
   }
   refreshButton.disabled = true;

@@ -25,6 +25,33 @@
           </div>
           <span class="section-index">YOUR ACCOUNT</span>
         </div>
+        <section class="account-auth-card" aria-labelledby="account-auth-heading">
+          <div class="account-auth-copy">
+            <div class="eyebrow eyebrow-light">YOUR SAFER SPACE</div>
+            <h2 id="account-auth-heading">Keep your reports <span>close.</span></h2>
+            <p>Create an account to keep your scam-check reports together. We’ll verify your email before enabling account access.</p>
+            <ul class="account-auth-benefits">
+              <li><span aria-hidden="true">✓</span> Private report history, tied to your account</li>
+              <li><span aria-hidden="true">✓</span> Your message text is saved only with your consent</li>
+              <li><span aria-hidden="true">✓</span> Email verification helps protect your account</li>
+            </ul>
+          </div>
+          <div class="account-auth-controls">
+            <form class="auth-form account-auth-form" data-auth-form>
+              <label for="account-auth-email">Email address</label>
+              <input id="account-auth-email" data-auth-email type="email" autocomplete="email" placeholder="you@example.com" required />
+              <label for="account-auth-password">Password</label>
+              <input id="account-auth-password" data-auth-password type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required />
+              <div class="account-auth-actions">
+                <button class="button button-primary" data-auth-submit type="submit">Sign in <span aria-hidden="true">→</span></button>
+                <button class="auth-toggle" data-auth-mode-toggle type="button">Create account</button>
+              </div>
+              <button class="auth-reset" data-auth-reset type="button">Forgot your password?</button>
+              <p class="auth-status" data-auth-status role="status" aria-live="polite">Sign in to save and review your analysis history.</p>
+            </form>
+            <button class="auth-toggle auth-signout hidden" data-auth-signout type="button">Sign out</button>
+          </div>
+        </section>
         <div class="notice-card history-privacy"><strong>Privacy:</strong> Message reports are saved to your signed-in account when you analyze them. The original message text is excluded unless you opt in on the Scam Checker. Signed-out checks are not saved, and one account never displays another account’s data.</div>
         <section class="dashboard-overview" aria-label="Analysis overview">
           <div id="history-metrics" class="history-metrics"></div>

@@ -188,10 +188,10 @@ function printCurrentReport() {
 }
 
 function showSignInPrompt(message, isError = false) {
-  const status = document.querySelector("#auth-status");
+  const status = document.querySelector("[data-auth-status]");
   status.textContent = message;
-  status.style.color = isError ? "#ff9f89" : "";
-  const emailInput = document.querySelector("#auth-email");
+  status.classList.toggle("auth-status-error", isError);
+  const emailInput = document.querySelector("[data-auth-email]");
   emailInput?.scrollIntoView({ behavior: "smooth", block: "center" });
   emailInput?.focus({ preventScroll: true });
 }

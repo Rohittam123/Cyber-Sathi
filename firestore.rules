@@ -4,6 +4,7 @@ service cloud.firestore {
     match /users/{userId}/analyses/{analysisId} {
       allow create: if request.auth != null
         && request.auth.uid == userId
+        && request.auth.token.email_verified == true
         && request.resource.data.keys().hasOnly([
           'level', 'messageType', 'categories', 'messageText',
           'summary', 'signals', 'advice', 'recommendations', 'createdAt'
@@ -34,7 +35,9 @@ service cloud.firestore {
         && request.resource.data.advice is string
         && request.resource.data.advice.size() <= 2000
         && request.resource.data.createdAt == request.time;
-      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if request.auth != null
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
       allow update: if false;
     }
   }

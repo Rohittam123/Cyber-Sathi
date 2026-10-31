@@ -2,34 +2,45 @@ const { defineSecret } = require("firebase-functions/params");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 
 const OPENROUTER_API_KEY = defineSecret("OPENROUTER_API_KEY");
-const MAX_MESSAGE_LENGTH = 1500;
+const MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+const MAX_USER_MESSAGE_LENGTH = 1500;
+const MAX_ASSISTANT_MESSAGE_LENGTH = 10_000;
 const MAX_HISTORY_MESSAGES = 10;
+const MAX_HISTORY_BYTES = 60_000;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_REQUESTS = 8;
 const recentRequests = new Map();
 
 const SYSTEM_PROMPT = `You are CyberSaathi, a conversational cyber-safety and digital security education assistant.
-Give a fresh, natural answer tailored to the user's specific question; do not use a fixed canned script. Stay within defensive cyber safety, scam awareness, account/device protection, privacy, safe incident response, and high-level security education. Do not provide instructions that enable unauthorized access, credential theft, malware deployment, evasion, exploitation, or harm. If asked for harmful actions, briefly refuse and offer a safe defensive alternative.
-Never ask for passwords, OTPs, full payment details, recovery codes, or other secrets. Do not claim you checked a link/device/account or verified a live threat. Explain uncertainty and encourage verification through official channels. For suspected financial cyber fraud in India, advise promptly calling 1930 and reporting at cybercrime.gov.in; for other locations, advise the local official reporting authority.
-Answer clearly, calmly, and practically. Keep the answer concise but complete.`;
+Give a fresh, natural answer tailored to the user's question, especially defensive threat intelligence. For threat analysis, organize useful detail into assessment, supporting indicators or TTPs, confidence and uncertainty, and prioritized defensive actions. Distinguish observed facts from hypotheses, note when indicators may be stale or shared, and never invent sources, live intelligence, attribution, or verification.
+Stay within defensive cyber safety, scam awareness, incident response, threat hunting, detection engineering, and high-level security education. Do not provide instructions that enable unauthorized access, credential theft, malware deployment, evasion, exploitation, or harm. If asked for harmful actions, briefly refuse and offer a safe defensive alternative.
+Never ask for passwords, OTPs, full payment details, recovery codes, private keys, or other secrets. Do not claim you checked a link/device/account or verified a live threat. Explain uncertainty and encourage verification through trusted sources. Do not reveal private chain-of-thought; give conclusions and a concise rationale instead. For suspected financial cyber fraud in India, advise promptly calling 1930 and reporting at cybercrime.gov.in; for other locations, advise the local official reporting authority.
+Answer clearly, calmly, and practically. Be detailed when the user asks for threat-intelligence analysis, but keep the answer focused and actionable.`;
 
 function validateMessages(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_HISTORY_MESSAGES) {
     throw new HttpsError("invalid-argument", "The chat history is invalid. Start a new question and try again.");
   }
 
-  let totalLength = 0;
+  let totalBytes = 0;
   const messages = value.map((message) => {
     if (!message || !["user", "assistant"].includes(message.role)
       || typeof message.content !== "string" || !message.content.trim()
-      || message.content.length > MAX_MESSAGE_LENGTH) {
-      throw new HttpsError("invalid-argument", "Each chat message must be plain text under 1,500 characters.");
+      || message.content.length > (message.role === "user" ? MAX_USER_MESSAGE_LENGTH : MAX_ASSISTANT_MESSAGE_LENGTH)) {
+      throw new HttpsError("invalid-argument", "User questions must be under 1,500 characters and assistant responses must be under 10,000 characters.");
     }
-    totalLength += message.content.length;
-    return { role: message.role, content: message.content.trim() };
+    const validatedMessage = { role: message.role, content: message.content.trim() };
+    if (message.reasoning_details !== undefined) {
+      if (message.role !== "assistant" || !message.reasoning_details || typeof message.reasoning_details !== "object") {
+        throw new HttpsError("invalid-argument", "The assistant reasoning context is invalid.");
+      }
+      validatedMessage.reasoning_details = message.reasoning_details;
+    }
+    totalBytes += Buffer.byteLength(JSON.stringify(validatedMessage), "utf8");
+    return validatedMessage;
   });
 
-  if (messages[messages.length - 1].role !== "user" || totalLength > 8000) {
+  if (messages[messages.length - 1].role !== "user" || totalBytes > MAX_HISTORY_BYTES) {
     throw new HttpsError("invalid-argument", "The chat history is too long or does not end with a question.");
   }
   return messages;
@@ -73,10 +84,11 @@ exports.cyberChat = onCall({
         "X-Title": "CyberSaathi Cyber Safety Assistant",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat",
+        model: MODEL,
         messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-        temperature: 0.75,
-        max_tokens: 700,
+        reasoning: { enabled: true },
+        temperature: 0.5,
+        max_tokens: 1200,
       }),
     });
   } catch (error) {
@@ -107,7 +119,7 @@ exports.cyberChat = onCall({
       throw new HttpsError("resource-exhausted", "OpenRouter is rate-limiting requests. Wait a little and try again.");
     }
     if (response.status === 400 || response.status === 404) {
-      throw new HttpsError("failed-precondition", `OpenRouter could not use the configured DeepSeek model${errorCode ? ` (${errorCode})` : ""}. Check model availability in OpenRouter.`);
+      throw new HttpsError("failed-precondition", `OpenRouter could not use ${MODEL}${errorCode ? ` (${errorCode})` : ""}. Check model availability in OpenRouter.`);
     }
     throw new HttpsError("unavailable", "OpenRouter is temporarily unable to answer. Please try again shortly.");
   }
@@ -120,11 +132,16 @@ exports.cyberChat = onCall({
     throw new HttpsError("unavailable", "The AI service returned an unreadable response. Please try again.");
   }
 
-  const reply = payload?.choices?.[0]?.message?.content;
+  const assistantMessage = payload?.choices?.[0]?.message;
+  const reply = assistantMessage?.content;
   if (typeof reply !== "string" || !reply.trim()) {
     console.error("OpenRouter response did not include assistant text.");
     throw new HttpsError("unavailable", "The AI service returned an empty response. Please try again.");
   }
 
-  return { reply: reply.trim() };
+  const result = { role: "assistant", content: reply.trim() };
+  if (assistantMessage.reasoning_details !== undefined) {
+    result.reasoning_details = assistantMessage.reasoning_details;
+  }
+  return { message: result };
 });

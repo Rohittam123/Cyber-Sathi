@@ -140,39 +140,6 @@ const FAQS = [
   },
 ];
 
-const PLATFORM_SECTIONS = [
-  {
-    title: "Check a suspicious message",
-    detail: "The Scam Checker analyzes message text in your browser and highlights common warning signs. It is a learning aid, not a security verdict, and it cannot guarantee that a message is safe.",
-    href: "./scam-checker.html",
-    link: "Open Scam Checker",
-  },
-  {
-    title: "Get a response plan",
-    detail: "The Incident Response planner provides step-by-step guidance for situations such as clicking a link, sharing account details, installing remote-access software, losing money, or an account takeover.",
-    href: "./incident-response.html",
-    link: "Build a recovery plan",
-  },
-  {
-    title: "Learn to spot common scams",
-    detail: "The Scam Library, Safety Guide, and predefined Basic and Intermediate chat guides explain common tactics and safer actions in plain language.",
-    href: "./scam-library.html",
-    link: "Explore the Scam Library",
-  },
-  {
-    title: "Practice and track your habits",
-    detail: "Take the Phishing Quiz, work through the Cyber Safety Checklist, and see your quiz and checklist progress on the Awareness Score page.",
-    href: "./phishing-quiz.html",
-    link: "Take the Phishing Quiz",
-  },
-  {
-    title: "Understand privacy and saved reports",
-    detail: "Quiz and checklist progress stays in this browser. Scam-check reports are saved to your signed-in account; the original message is only included when you opt in before analyzing it. Do not enter passwords, OTPs, recovery codes, or payment details into CyberSaathi.",
-    href: "./about.html",
-    link: "Read about CyberSaathi",
-  },
-];
-
 export function initCyberChatWidget() {
   if (document.querySelector(".cyber-chat")) return;
 
@@ -182,20 +149,20 @@ export function initCyberChatWidget() {
     <section class="cyber-chat-panel" id="cyber-chat-panel" role="dialog" aria-label="CyberSaathi AI chat" aria-modal="false" aria-hidden="true">
       <header class="cyber-chat-header">
         <div class="cyber-chat-avatar" aria-hidden="true">C</div>
-        <div class="cyber-chat-heading"><strong>CyberSaathi Platform Guide</strong><span><i></i> Predefined help · works offline</span></div>
+        <div class="cyber-chat-heading"><strong>Ask Saathi</strong><span><i></i> AI threat intelligence · defensive guidance</span></div>
         <button class="cyber-chat-close" type="button" aria-label="Close chat">×</button>
       </header>
-      <div class="cyber-chat-disclaimer">Answers are predefined guides about CyberSaathi and its tools. Your question stays in this browser and is not sent to an AI service.</div>
+      <div class="cyber-chat-disclaimer">Ask for defensive threat analysis, indicators, or mitigations. Typed questions are sent securely to the Ask Saathi service; don’t include secrets or confidential data.</div>
       <div class="cyber-chat-messages" role="log" aria-live="polite" aria-relevant="additions text">
-        <article class="cyber-chat-message assistant"><div class="cyber-chat-bubble">Welcome! Choose a Basic or Intermediate safety guide, or type any question. Typed questions receive the same detailed, predefined overview of CyberSaathi and what you can do here.</div></article>
-      </div>
-      <div class="cyber-chat-suggestions" aria-label="Predefined cyber-safety guides">
-        <div class="cyber-chat-faq-heading"><span>QUICK GUIDES</span><span>Detailed answers · no AI setup</span></div>
-        <div class="cyber-chat-faq-categories" role="group" aria-label="Guide difficulty">
-          <button type="button" data-faq-category="basic" aria-pressed="true">Basic</button>
-          <button type="button" data-faq-category="intermediate" aria-pressed="false">Intermediate</button>
+        <article class="cyber-chat-message assistant"><div class="cyber-chat-bubble">Hi, I’m Ask Saathi. Ask me to explain a suspicious indicator, summarize a threat technique, or suggest defensive detections and response steps. I’ll explain uncertainty and won’t claim live verification. Avoid sharing secrets or sensitive internal data.</div></article>
+        <div class="cyber-chat-suggestions" aria-label="Predefined cyber-safety guides">
+          <div class="cyber-chat-faq-heading"><span>QUICK GUIDES</span><span>Detailed answers · no AI setup</span></div>
+          <div class="cyber-chat-faq-categories" role="group" aria-label="Guide difficulty">
+            <button type="button" data-faq-category="basic" aria-pressed="true">Basic</button>
+            <button type="button" data-faq-category="intermediate" aria-pressed="false">Intermediate</button>
+          </div>
+          <div class="cyber-chat-faq-prompts"></div>
         </div>
-        <div class="cyber-chat-faq-prompts"></div>
       </div>
       <form class="cyber-chat-form">
         <label class="sr-only" for="cyber-chat-input">Ask a question about CyberSaathi</label>
@@ -214,16 +181,19 @@ export function initCyberChatWidget() {
   const closeButton = widget.querySelector(".cyber-chat-close");
   const form = widget.querySelector(".cyber-chat-form");
   const input = widget.querySelector("#cyber-chat-input");
+  const sendButton = widget.querySelector(".cyber-chat-send");
   const messagesView = widget.querySelector(".cyber-chat-messages");
   const status = widget.querySelector(".cyber-chat-status");
   const suggestions = widget.querySelector(".cyber-chat-suggestions");
   const faqPrompts = widget.querySelector(".cyber-chat-faq-prompts");
   let selectedFaqCategory = "basic";
+  let conversation = [];
+  let isSending = false;
   function setOpen(isOpen) {
     panel.classList.toggle("is-open", isOpen);
     panel.setAttribute("aria-hidden", String(!isOpen));
     launcher.setAttribute("aria-expanded", String(isOpen));
-    launcher.setAttribute("aria-label", isOpen ? "Close CyberSaathi platform guide" : "Open CyberSaathi platform guide");
+    launcher.setAttribute("aria-label", isOpen ? "Close Ask Saathi" : "Open Ask Saathi");
     if (isOpen) input.focus();
   }
 
@@ -237,6 +207,12 @@ export function initCyberChatWidget() {
     messagesView.append(article);
     messagesView.scrollTop = messagesView.scrollHeight;
     return article;
+  }
+
+  function showSuggestionsAfterAnswer(article) {
+    messagesView.append(suggestions);
+    const messageTop = article.getBoundingClientRect().top - messagesView.getBoundingClientRect().top + messagesView.scrollTop;
+    messagesView.scrollTop = messageTop;
   }
 
   function renderFaqPrompts() {
@@ -285,58 +261,7 @@ export function initCyberChatWidget() {
     bubble.append(label, introduction, stepsHeading, steps, takeaway);
     article.append(bubble);
     messagesView.append(article);
-    messagesView.scrollTop = messagesView.scrollHeight;
-  }
-
-  function addPlatformOverview() {
-    const article = document.createElement("article");
-    article.className = "cyber-chat-message assistant cyber-chat-faq-answer cyber-chat-platform-answer";
-    const bubble = document.createElement("div");
-    bubble.className = "cyber-chat-bubble";
-
-    const label = document.createElement("span");
-    label.className = "cyber-chat-answer-label";
-    label.textContent = "ABOUT CYBERSAATHI · PREDEFINED PLATFORM OVERVIEW";
-
-    const introduction = document.createElement("p");
-    introduction.textContent = "CyberSaathi is a cyber-safety awareness and assistance platform. It helps you understand suspicious messages, learn safer online habits, and find practical next steps. This same overview is shown for every typed question; it is a predefined guide, not a personalized AI response.";
-
-    const sectionsHeading = document.createElement("strong");
-    sectionsHeading.className = "cyber-chat-steps-heading";
-    sectionsHeading.textContent = "What you can do on CyberSaathi";
-
-    const sections = document.createElement("ol");
-    PLATFORM_SECTIONS.forEach((section) => {
-      const item = document.createElement("li");
-      const title = document.createElement("strong");
-      title.textContent = section.title;
-      const detail = document.createElement("span");
-      detail.textContent = section.detail;
-      const link = document.createElement("a");
-      link.href = section.href;
-      link.textContent = section.link;
-      item.append(title, detail, link);
-      sections.append(item);
-    });
-
-    const emergency = document.createElement("p");
-    emergency.className = "cyber-chat-takeaway";
-    emergency.append("Urgent financial cyber fraud in India? Contact your bank or payment provider using its official contact details, call ");
-    const helpline = document.createElement("a");
-    helpline.href = "tel:1930";
-    helpline.textContent = "1930";
-    emergency.append(helpline, ", and report at ");
-    const reportSite = document.createElement("a");
-    reportSite.href = "https://cybercrime.gov.in/";
-    reportSite.target = "_blank";
-    reportSite.rel = "noopener noreferrer";
-    reportSite.textContent = "cybercrime.gov.in";
-    emergency.append(reportSite, ". CyberSaathi is an educational tool, not an emergency service or security verdict.");
-
-    bubble.append(label, introduction, sectionsHeading, sections, emergency);
-    article.append(bubble);
-    messagesView.append(article);
-    messagesView.scrollTop = messagesView.scrollHeight;
+    showSuggestionsAfterAnswer(article);
   }
 
   renderFaqPrompts();
@@ -349,6 +274,7 @@ export function initCyberChatWidget() {
     }
   });
   suggestions.addEventListener("click", (event) => {
+    if (isSending) return;
     const categoryButton = event.target.closest("[data-faq-category]");
     if (categoryButton) {
       selectedFaqCategory = categoryButton.dataset.faqCategory;
@@ -363,8 +289,17 @@ export function initCyberChatWidget() {
     const faq = FAQS.find((item) => item.id === suggestion.dataset.faqId);
     if (!faq) return;
     status.textContent = "Predefined safety guide shown. Your question was not sent to an AI service.";
+    suggestions.remove();
     addMessage("user", faq.question);
     addFaqAnswer(faq);
+    conversation = [
+      ...conversation,
+      { role: "user", content: faq.question },
+      {
+        role: "assistant",
+        content: `${faq.introduction}\n\n${faq.steps.map((step, index) => `${index + 1}. ${step.title}: ${step.detail}`).join("\n")}\n\n${faq.takeaway}`,
+      },
+    ].slice(-8);
   });
   input.addEventListener("input", () => {
     input.style.height = "auto";
@@ -379,17 +314,52 @@ export function initCyberChatWidget() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const prompt = input.value.trim();
-    if (!prompt) return;
+    if (!prompt || isSending) return;
     if (prompt.length > MAX_MESSAGE_LENGTH) {
       status.textContent = `Please keep your message under ${MAX_MESSAGE_LENGTH} characters.`;
       return;
     }
 
-    status.textContent = "This is a predefined CyberSaathi overview. Your question was not sent to an AI service.";
+    status.textContent = "Asking Ask Saathi…";
     input.value = "";
     input.style.height = "auto";
+    suggestions.remove();
     addMessage("user", prompt);
-    addPlatformOverview();
-    input.focus();
+    const pending = addMessage("assistant", "Reviewing your question…");
+    pending.classList.add("is-pending");
+    isSending = true;
+    input.disabled = true;
+    sendButton.disabled = true;
+    void (async () => {
+      try {
+        const { askCyberSaathi } = await import("./ask-sathi.js");
+        const requestMessages = [
+          ...conversation.slice(-8),
+          { role: "user", content: prompt },
+        ];
+        const assistantMessage = await askCyberSaathi(requestMessages);
+        if (!assistantMessage || assistantMessage.role !== "assistant"
+          || typeof assistantMessage.content !== "string" || !assistantMessage.content.trim()) {
+          throw new Error("Ask Saathi returned an invalid response. Please try again.");
+        }
+        conversation = [...requestMessages, assistantMessage];
+        pending.remove();
+        const answer = addMessage("assistant", assistantMessage.content.trim());
+        answer.classList.add("cyber-chat-ai-answer");
+        showSuggestionsAfterAnswer(answer);
+        status.textContent = "AI-generated defensive guidance. Verify important findings with trusted sources.";
+      } catch (error) {
+        pending.remove();
+        const failure = addMessage("assistant", error.message || "Ask Saathi could not answer right now. Please try again.");
+        failure.classList.add("cyber-chat-error");
+        showSuggestionsAfterAnswer(failure);
+        status.textContent = "Ask Saathi could not complete that request.";
+      } finally {
+        isSending = false;
+        input.disabled = false;
+        sendButton.disabled = false;
+        input.focus();
+      }
+    })();
   });
 }

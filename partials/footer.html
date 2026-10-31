@@ -2,16 +2,17 @@
   <a class="brand" href="./index.html"><span class="brand-mark" aria-hidden="true">C</span><span>Cyber<span class="brand-accent">Saathi</span></span></a>
   <p>Awareness is your first line of defence. Stay alert, stay kind, stay safer.</p>
   <div class="footer-auth">
-    <span id="auth-status" aria-live="polite">Sign in to save your analysis history.</span>
-    <form id="auth-form" class="auth-form">
-      <label class="sr-only" for="auth-email">Email address</label>
-      <input id="auth-email" type="email" autocomplete="email" placeholder="Email address" required />
-      <label class="sr-only" for="auth-password">Password</label>
-      <input id="auth-password" type="password" autocomplete="current-password" minlength="6" placeholder="Password (6+ characters)" required />
-      <button id="auth-submit" class="button button-small" type="submit">Sign in</button>
-      <button id="auth-mode-toggle" class="auth-toggle" type="button">Create account</button>
+    <form class="auth-form footer-auth-form" data-auth-form>
+      <label class="sr-only" for="footer-auth-email">Email address</label>
+      <input id="footer-auth-email" data-auth-email type="email" autocomplete="email" placeholder="Email address" required />
+      <label class="sr-only" for="footer-auth-password">Password</label>
+      <input id="footer-auth-password" data-auth-password type="password" autocomplete="current-password" minlength="6" placeholder="Password (6+ characters)" required />
+      <button class="button button-small" data-auth-submit type="submit">Sign in</button>
+      <button class="auth-toggle" data-auth-mode-toggle type="button">Create account</button>
+      <button class="auth-reset" data-auth-reset type="button">Forgot password?</button>
+      <span class="auth-status" data-auth-status role="status" aria-live="polite">Sign in to save your analysis history.</span>
     </form>
-    <button id="auth-signout" class="auth-toggle hidden" type="button">Sign out</button>
+    <button class="auth-toggle hidden" data-auth-signout type="button">Sign out</button>
   </div>
   <small>CyberSaathi is an awareness tool, not a cybersecurity or law-enforcement service.</small>
 </footer>

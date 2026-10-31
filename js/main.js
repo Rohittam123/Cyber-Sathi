@@ -55,28 +55,21 @@ async function initCyberChat() {
 }
 
 async function initAuthentication() {
-  const form = document.querySelector("#auth-form");
-  if (!form) return;
+  const forms = [...document.querySelectorAll("[data-auth-form]")];
+  if (!forms.length) return;
   try {
     const { initAuth } = await import("./auth.js");
-    window.cyberSaathiAuthState = initAuth({
-      form,
-      emailInput: document.querySelector("#auth-email"),
-      passwordInput: document.querySelector("#auth-password"),
-      submitButton: document.querySelector("#auth-submit"),
-      modeButton: document.querySelector("#auth-mode-toggle"),
-      signOutButton: document.querySelector("#auth-signout"),
-      status: document.querySelector("#auth-status"),
-    });
+    window.cyberSaathiAuthState = initAuth({ forms });
     window.cyberSaathiAuthState.setOnUserChange((user) => {
       window.dispatchEvent(new CustomEvent("cybersaathi-auth-state", { detail: { user } }));
     });
   } catch (error) {
     console.error("Firebase authentication could not be initialized.", error);
-    const status = document.querySelector("#auth-status");
-    status.textContent = "Authentication is unavailable. Check your connection and Firebase configuration.";
-    status.style.color = "#ff9f89";
-    form.addEventListener("submit", (event) => event.preventDefault());
+    document.querySelectorAll("[data-auth-status]").forEach((status) => {
+      status.textContent = "Authentication is unavailable. Check your connection and Firebase configuration.";
+      status.classList.add("auth-status-error");
+    });
+    forms.forEach((form) => form.addEventListener("submit", (event) => event.preventDefault()));
   }
 }
 
